@@ -1,0 +1,285 @@
+
+<!doctype html>
+<html lang="tr">
+  <head>
+    <!-- Required meta tags -->
+    <meta name="robots" content="noindex,nofollow">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <style>
+        table, th, td {
+            border: 0px solid black;
+        }
+        td {
+            padding: 15px;
+        }
+        .map {
+            height: 325px;
+            width: 310px;
+        }
+    </style>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <!--OpenLayers Css-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/css/ol.css" type="text/css">
+    <!--Openlayers Script-->
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/build/ol.js"></script>
+    <title>Udea Demo Video Server</title>
+  </head>
+  <body>
+        <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">Udea</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+      </div>
+    </div>
+  </nav>
+      <!--Page Content-->
+      <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                
+            </div>
+            <div class="col-sm">
+               
+                <!--Form Example End-->
+                <table style="width:100%">
+                <tr>
+                    <td colspan="2">
+                    <p> <center> <h2> Video Sunucu </h2> <br> Lütfen firefox web tarayıcısını kullanınız. </center> </p>
+                    </td>
+                </tr>  
+                <tr> 
+                    <div class="form-group row">
+                    <td>Sunucu Adres</td>
+                    <td> 
+                        <input class="form-control" type="text" id="ip-input" name="ip-input" required="required" >
+                    </td>
+                    </div>
+                </tr>
+                <tr>
+                    <div class="form-group row">
+                    <td>Sunucu Port</td>
+                    <td>
+                        <input class="form-control" type="number"  id="port-input" name="port-input" required="required" >
+                    </td>
+                    </div>
+                </tr>
+                <tr> 
+                    <div class="form-group row">
+                    <td>Gps Sunucu ip</td>
+                    <td> 
+                        <input class="form-control" type="text" id="gps-ip-input" name="gps-ip-input" required="required" >
+                    </td>
+                    </div>
+                </tr>
+                <tr>
+                    <div class="form-group row">
+                    <td>Gps Port</td>
+                    <td>
+                        <input class="form-control" type="number"  id="gps-port-input" name="gps-port-input" required="required" >
+                    </td>
+                    </div>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                  </div>
+                  <div class="form-group">
+                    <center>
+                    <button class="btn btn-primary" onclick="videoServerConnect()">Bağlan</button>
+                    </center>
+                  </div>
+                  </td>
+                  </tr>
+                  </table>        
+    
+                <br>
+                <br>
+                <!--Form Example End-->
+                  
+            </div>
+            <div class="col-sm">
+                <br>
+                <br>
+                <br>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="container">
+        <div class="row">
+          <div class="col">
+            <video id="videoplayer" width="704" height="576" controls>
+                <source src="" id="videosrc"  type="video/ogg" codecs="theora, vorbis">
+                    You browser doesn't support element <code>video</code>.
+            </video>
+          </div>
+          <div class="col">
+            <table>
+                <tr>
+                    <td>
+                        <div class="col">
+                            <div id="map" class="map"></div>
+                            <script type="text/javascript">
+                              var map = new ol.Map({
+                                target: 'map',
+                                layers: [
+                                  new ol.layer.Tile({
+                                    source: new ol.source.OSM()
+                                  })
+                                ],
+                                view: new ol.View({
+                                  center: ol.proj.fromLonLat([32.7747,39.8997]),
+                                  zoom: 15
+                                })
+                              });
+                            </script>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table class="table">
+                            <tr>
+                                <td colspan="2"><p style="text-align: center;"> GPS VERİLERİ </p> </td>
+                            </tr>
+                            <tbody style="text-align: center;">
+                              <tr>
+                                <th scope="row">Uydu Sayısı</th>
+                                <td><span id="uyduCount">0</span></td>
+                              </tr>
+                              <tr>
+                                <th scope="row">Rakım</th>
+                                <td><span id="rakim">0</span> m</td>
+                              </tr>
+                              <tr>
+                                <th scope="row">Hız</th>
+                                <td><span id="hiz">0</span> km/h</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                    </td>
+                </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <br/>
+      <br/>
+      <br/>
+
+    <script>
+        var websocket = null;
+        var oldLayer=null;
+
+        function videoServerConnect() {
+            var ip=document.getElementById("ip-input").value;
+            var port=document.getElementById("port-input").value;
+            var url="http://"+ip+":"+port;
+            console.log("Video Sunucu URL="+url)
+            document.getElementById("videosrc").setAttribute("src",url);
+            var vid = document.getElementById("videoplayer");
+            vid.autoplay = true;
+            vid.load();
+
+            var gpsip=document.getElementById("gps-ip-input").value;
+            var gpsport=document.getElementById("gps-port-input").value;
+            var wsUrl="ws://"+gpsip+":"+gpsport;
+            console.log("Web Socket Url="+wsUrl);
+            gpsWebSocketConnect(wsUrl);
+        }
+        
+        function gpsWebSocketConnect(gpsWebSocketServerUrl){
+            try {
+                if (typeof MozWebSocket == 'function')
+                    WebSocket = MozWebSocket;
+                if ( websocket && websocket.readyState == 1 )
+                    websocket.close();
+                    
+                    websocket = new WebSocket(gpsWebSocketServerUrl);
+                    
+                    websocket.onopen = function (evt) {
+                          console.log("Web Socket Connected");
+                    };
+
+                    websocket.onclose = function (evt) {
+                          console.log("Web Socket Disconnected");
+                    };
+
+                    websocket.onmessage = function (evt) {
+                        console.log( "Message received :", evt.data );
+                        var parseData=evt.data.split(",");
+                        if(parseData.length>5){
+                            var lat=parseData[0];
+                            var lot=parseData[2];
+
+                            document.getElementById("uyduCount").innerHTML = parseData[4];
+                            document.getElementById("rakim").innerHTML = parseData[5];
+                            document.getElementById("hiz").innerHTML = parseData[6];
+
+                            addPoint(lat,lot);
+                        }else{
+                            console.log("Parse data 5 den kucuk");
+                        }
+                    };
+
+                    websocket.onerror = function (evt) {
+                        console.log('Web Socket ERROR: ' + evt.data);
+                    };
+
+            } catch (exception) {
+                debug('ERROR: ' + exception);
+            }
+        }
+
+        function addPoint(latitude,longutitude) {
+            var layer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [
+                    new ol.Feature({
+                    geometry: new ol.geom.Point(ol.proj.fromLonLat([longutitude,latitude]))
+                    })
+                ]
+                }),
+                style: new ol.style.Style({
+                    image: new ol.style.Circle({
+                    radius: 7,
+                    fill: new ol.style.Fill({color: 'red'})
+                    })
+                })
+            });
+            if(oldLayer!=null){
+                map.removeLayer(oldLayer);
+            }
+            map.addLayer(layer);
+            oldLayer=layer;
+            map.getView().setCenter(ol.proj.fromLonLat([longutitude,latitude]));
+        }
+
+    </script>
+
+    <!--Page Footer-->
+    <br>
+    <br>
+    <footer id="sticky-footer" class="py-4 bg-dark text-white-50" style="position: fixed;left: 0;bottom: 0;width: 100%;">
+        <div class="container text-center">
+          <small>Copyright &copy; <a href="http://www.ramazanuysal.com" >Ramazan UYSAL</a></small>
+        </div>
+      </footer>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  </body>
+</html>
